@@ -88,12 +88,18 @@ def download_dpkg(package_files, packages, workspace_name):
             if (pkg_name in metadata and 
             (pkg_version == "" or
             pkg_version == metadata[pkg_name][VERSION_KEY])):
-                pkg = metadata[pkg_name]
-                buf = urllib2.urlopen(pkg[FILENAME_KEY])
-                package_to_rule_map[pkg_name] = util.package_to_rule(workspace_name, pkg_name)
-                out_file = os.path.join("file", util.encode_package_name(pkg_name))
-                with open(out_file, 'w') as f:
-                    f.write(buf.read())
+                try:
+                    pkg = metadata[pkg_name]
+                    url = pkg[FILENAME_KEY]
+                    print "Downloading package {} from {} \n".format(pkg, url)
+                    buf = urllib2.urlopen(url)
+                    package_to_rule_map[pkg_name] = util.package_to_rule(workspace_name, pkg_name)
+                    out_file = os.path.join("file", util.encode_package_name(pkg_name))
+                    with open(out_file, 'w') as f:
+                        f.write(buf.read())
+                except urllib2.URLError as e:
+                    print "Error during downloading {} from {}: {} \n".format(pkg, url, e)
+                    raise e
                 expected_checksum = util.sha256_checksum(out_file)
                 actual_checksum = pkg[SHA256_KEY]
                 if actual_checksum != expected_checksum:
@@ -159,9 +165,14 @@ SHA256: 52ec3ac93cf8ba038fbcefe1e78f26ca1d59356cdc95e60f987c3f52b3f5e7ef
           arch
       )
 
-    buf = urllib2.urlopen(url)
-    with open("Packages.gz", 'w') as f:
-        f.write(buf.read())
+    print "Downloading Packages.gz from {} \n".format(url)
+    try:
+        buf = urllib2.urlopen(url)
+        with open("Packages.gz", 'w') as f:
+            f.write(buf.read())
+    except urllib2.URLError as e:
+        print "Error during downloading Packages.gz from {}: {} \n".format(url, e)
+        raise e
     actual_sha256 = util.sha256_checksum("Packages.gz")
     if sha256 != actual_sha256:
         raise Exception("sha256 of Packages.gz don't match: Expected: %s, Actual:%s" %(sha256, actual_sha256))
