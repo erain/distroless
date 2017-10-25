@@ -12,7 +12,7 @@ exports_files(deb_files + ["packages.bzl"])
       "--workspace-name", repository_ctx.name,
   ]
 
-  result = repository_ctx.execute(args)
+  result = repository_ctx.execute(args, quiet=False)
   if result.return_code:
     fail("dpkg_parser command failed: %s (%s)" % (result.stderr, " ".join(args)))
 
@@ -46,7 +46,7 @@ exports_files(["Packages.json", "os_release.tar"])
       "--sha256=" + repository_ctx.attr.sha256,
   ]
 
-  result = repository_ctx.execute(args)
+  result = repository_ctx.execute(args, quiet=False)
   if result.return_code:
     fail("dpkg_parser command failed: %s (%s)" % (result.stderr, " ".join(args)))
 
